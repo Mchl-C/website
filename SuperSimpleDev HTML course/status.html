@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Status </title>
+		<style>
+			p{
+				font-family: Arial;
+				font-size: 16px;
+				margin-top: 0;
+				margin-bottom: 0;
+			}
+			.profile{
+				width: 300px;
+				height: 75%;
+				border-radius: 20px;
+				border: 1px solid gray;
+				box-shadow: 0 0 5px rgba(0,0,0,.8);
+			}
+
+			.pfp{
+				display: block;
+				margin-left: 100px;
+				margin-top: 50px;
+				width: 64px;
+				height: 64px;
+				object-fit: cover;
+				object-position: center;
+				border-radius: 32px;
+			}
+
+			.name{
+				font-size: 26px;
+				font-family: Arial;
+				font-weight: 500px;
+				margin-left: 100px;
+				margin-bottom: 3px;
+				margin-top: 15px;
+			}
+			.desc{
+				font-size: 16px;
+				font-family: Arial;
+				color: rgba(96,96,96,.8);
+				margin-left: 105px;
+				margin-top: 0;
+				margin-bottom: 10px;
+			}
+
+			.options{
+				margin-left: 25px;
+			}
+
+			.buttons{
+				height: 64px;
+				width: 100px;
+				background-color: white;
+				box-shadow: 0 0 5px rgba(1,1,1,.8);
+				margin-right: 10px;
+				margin-bottom: 15px;
+				border: none;
+				cursor: pointer;
+
+				transition: background-color 1s, color 1s;
+			}
+
+			.buttons:hover{
+				background-color: rgba(164,164,164,0.8);
+				color: white;
+			}
+
+			.buttons:active{
+				opacity: 0.8;
+			}
+
+
+			.details{
+				text-align: left;
+				margin-left: 15px;
+				margin-bottom: 50px;
+			}
+
+			.description{
+				color: rgba(96,96,96,.8);
+				text-align: left;
+				margin-top: 15px;
+				margin-bottom: 5px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class = "profile">
+			<!-- profile -->
+			<div>
+				<img class = "pfp" src = "pfp.png">
+				<p class = "name"> Steffi </p>
+				<p class = "desc"> ~Steffi </p>
+			</div>
+
+			<!-- buttons -->
+			<div class = "options">
+				<button class = "buttons"> video </button>
+				<button class = "buttons"> call </button>
+			</div>	
+
+			<!-- details -->
+			<div class = "details">
+				<div class = "about">
+					<p class = "description"> About </p>
+					<p> 水滴石穿 </p>
+				</div>
+
+				<div class = "phone">
+					<p class = "description"> Phone number </p>
+					<p> +62 812-6467-3338 </p>
+				</div>
+
+				<div class = "dm">
+					<p class = "description"> Dissappearing messages </p>
+					<p> Off </p>
+				</div>
+			</div>
+
+		</div>
+	</body>
+<html>
