@@ -15,7 +15,7 @@
   <body>
     <main>
       <div class="container">
-      <center> <h1>
+      <center> <h1 style="margin-top: 10vh;">
         <span style="color: #f840a8; text-decoration: underline">Personal</span> Diary <span style="color: #f840a8;">- Univ Preparation</span>
       </h1> </center>
       <div class="sprite-wrapper">
@@ -39,22 +39,20 @@
                 <div class="page right-page">
                   <div>
                   	<div class = "section-2">
-						<div class = "upper"></div>
+          						<div class = "upper"></div>
 
-						<div class = "lower">
-							<p class = "sub-title"> Remaining Time Before Departure </p>
-							<div class = "time-container"> 
-								<p id = "remaining-time" class = "sub-title"> hello </p>
-							</div>
-							<p> Departure Time : </p>
-							<p> 21 August 2025 --- 20.20 WIB </p>
-							<!-- <p id = "depart-time"> </p> -->
+          						<div class = "lower">
+          							<p class = "sub-title"> Remaining Time Before Departure </p>
+          							<div class = "time-container"> 
+          								<p id = "remaining-time" class = "sub-title"> hello </p>
+          							</div>
+          							<p> Departure Time : </p>
+          							<p> 21 August 2025 --- 20.20 WIB </p>
+          							<!-- <p id = "depart-time"> </p> -->
 
-							<p id = "time-diff"> </p>
-						</div>
-					</div>
-
-                    
+          							<p id = "time-diff"> </p>
+          						</div>
+          					</div>
                   </div>
                 </div>
               </div>
@@ -63,23 +61,19 @@
               <div class="page-container">
                 <div class="page left-page">
                   <div>
-                    <p style="margin: 0;">
-                      count, sprite layout, and total animation length adapt based on user-defined CSS variables.
-                      The animation is responsive to scroll progress using scroll-timeline and is scoped per element using
-                      timeline-scope.
+                    <p style="font-size: 2em;">
+                      NTHU Preparation ✈
                     </p><br>
-                    <p style="margin: 0; text-indent: 1rem">🖼️ Visual Layers</p>
-                    <p style="margin: 0; text-indent: 1rem">
-                      The book page uses a layered sprite system:
-                      One sprite sheet per page flip animation
-                      Positioned and animated via background-image
-                      The correct frame is selected based on scroll or button input
+                    <p style="margin: 0; text-indent: 1rem; font-size:1.5em; text-decoration:underline">🧪 Course Selection </p>
+                    <p style="margin: 0; text-indent: 1rem; font-size:1.5em;">
+                      📅Aug 18 - 20 (3 Days) 
                     </p><br>
-                    <p style="margin: 0; text-indent: 1rem">🧪 Browser Support</p>
-                    <p style="margin: 0; text-indent: 1rem">
-                      Requires Chrome 134+ for experimental CSS features like scroll-timeline, animation-timeline, ::scroll-button, and ::scroll-marker
-                      Best viewed with flags enabled or origin trials if needed
-                    </p>
+                    
+                    <p> Starts at 12:00 PM on Aug 18 and ends at 9:00 AM on Aug 21 </p>
+
+                    <p> Required or Optional Course List </p>
+                    <a href = "https://www.ccxp.nthu.edu.tw/ccxp/INQUIRE/JH/6/6.2/6.2.3/JH623001.php" style="position:relative; z-index:10;backgroun-color:lightblue;padding:5px;"> Click me! </a>
+
                   </div>
                 </div>
                 <div class="page right-page">
@@ -170,6 +164,25 @@
 			document.getElementById("time-diff").innerHTML = `${second} seconds`;
 			alert("Hello world")
 		}
+
+    document.querySelectorAll('.carousel-item').forEach((item, index) => {
+      item.style.zIndex = 100 - index; // First = 100, second = 99, etc.
+    });
+
+    const carousel = document.querySelector('.carousel');
+    const items = document.querySelectorAll('.carousel-item');
+
+    // Update z-index on scroll/snap
+    carousel.addEventListener('scroll', () => {
+      items.forEach((item, index) => {
+        // Calculate visibility (simplified)
+        const rect = item.getBoundingClientRect();
+        const isVisible = rect.left >= 0 && rect.right/2 <= window.innerWidth*0.6;
+        
+        // Set z-index: highest for visible item, lower for others
+        item.style.zIndex = isVisible ? 110 : 99 - index; 
+      });
+    });
 
 		// Call immediately and update every second
 		showTime();
