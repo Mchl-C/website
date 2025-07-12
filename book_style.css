@@ -153,7 +153,7 @@
         counter-increment: curpage;
         grid-area: scroll;
         overflow-x: auto;
-        scroll-snap-type: x mandatory;
+        scroll-snap-type: both mandatory;
         overscroll-behavior-x: contain;
 
         display: grid;
@@ -220,6 +220,10 @@
           animation-timeline: --carousel-timeline;
         }
 
+        .carousel-item.active {
+          z-index: 100; /* Highest when visible */
+        }
+
         & > .carousel-item {
           scroll-snap-stop: always;
           scroll-snap-align: start;
@@ -231,6 +235,7 @@
           position: relative;
           box-sizing: border-box;
           color: #333;
+          z-index: 0;
 
           &::scroll-marker {
             content: '';
