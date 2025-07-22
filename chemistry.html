@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body{
+        widht: 3000px;
+        height: 3000px;
+      }
+
+      .container {
+        width: 400px;
+        height: 400px;
+        perspective: 500px;
+        display: relative;
+        margin: 300px;
+        margin-left: 400px;
+      }
+
+      .face {
+        width: var(--height);
+        height: var(--width);
+        border-radius: 100%;
+        background: rgb(255, 219, 88);
+        border: 1px solid black;
+        position: absolute;
+        opacity: 0.5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
+        font-size: 2rem;
+      }
+
+      .shape {
+        position: relative;
+        width: var(--width);
+        height: var(--height);
+        transform-style: preserve-3d;
+        transform: rotate3d(1, 1, 0, 45deg);
+      }
+
+      .front {
+        transform: translateX(calc(var(--width) * .05)) rotateY(90deg);
+      }
+
+      .back {
+        transform: translateX(calc(var(--width) * -.05)) rotateY(-90deg);
+      }
+
+      
+      .s1{
+        transform: translate3d(calc(var(--width) * .05), calc(var(--width) * .05), calc(var(--width) * .15)) rotateZ(90deg);
+        width: calc(var(--width) * .9);
+        height: calc(var(--height) * .9);
+      }
+
+      .s2{
+        transform: translate3d(calc(var(--width) * .05), calc(var(--width) * .05), calc(var(--width) * -.15)) rotateZ(90deg);
+        width: calc(var(--width) * .9);
+        height: calc(var(--height) * .9); 
+      }
+
+      .s3{
+        transform: translate3d(calc(var(--width) * .15), calc(var(--width) * .15), calc(var(--width) * .35)) rotateZ(90deg);
+        width: calc(var(--width) * .7);
+        height: calc(var(--height) * .7); 
+      }
+
+      .s4{
+        transform: translate3d(calc(var(--width) * .15), calc(var(--width) * .15), calc(var(--width) * -.35)) rotateZ(90deg);
+        width: calc(var(--width) * .7);
+        height: calc(var(--height) * .7); 
+      }
+      
+      /* Other axis */
+      .v1{
+        transform: translate3d(calc(var(--width) * .15), calc(var(--width) * 0.025), calc(var(--width) * 0.025)) rotateY(90deg);
+        width: calc(var(--width) * .95);
+        height: calc(var(--height) * .95); 
+      }
+
+      .v2{
+        transform: translate3d(calc(var(--width) * -.15), calc(var(--width) * 0.025), calc(var(--width) * 0.025)) rotateY(90deg);
+        width: calc(var(--width) * .95);
+        height: calc(var(--height) * .95); 
+      }
+
+      .v3{
+        transform: translate3d(calc(var(--width) * .5), calc(var(--width) * 0.1), calc(var(--width) * 0.05)) rotateY(90deg);
+        width: calc(var(--width) * .75);
+        height: calc(var(--height) * .75); 
+      }
+
+      .v4{
+        transform: translate3d(calc(var(--width) * -.2), calc(var(--width) * 0.1), calc(var(--width) * 0.05)) rotateY(90deg);
+        width: calc(var(--width) * .75);
+        height: calc(var(--height) * .75); 
+      }
+
+      .shell{
+        width: 200px;
+        height: 200px;
+        margin-top: -50px;
+        margin-left: -50px;
+        position: relative;
+
+        border: 2px solid black;
+        background-color: rgb(255, 255, 171);
+        animation: revolve 5s linear infinite;
+      }
+
+      @keyframes revolve{
+        0%{
+          transform: rotate3d(0,1,1,0deg);
+        }
+        100%{
+          transform: rotate3d(1,0,1,360deg);
+        }
+      }
+
+      @keyframes turn-around {
+        from { transform: rotate3d(0, 0, 0, 0); }
+        to { transform: rotate3d(1, 1, 0, 360deg); }
+      }
+
+      @keyframes orbit {
+      0% {
+        z-index: 10;
+        transform: 
+          rotateY(0deg) 
+          rotateX(-60deg)
+          rotateZ(60deg)
+          translateZ(-140px)
+          translateX(140px)
+          translateY(-140px);
+          /*
+          
+          translateY(150px)
+          translateX(150px) 
+          
+          */
+        }
+
+      2%{
+        z-index: 10;
+      }
+      3%{
+        z-index: -1;
+      }
+
+      30%{
+        z-index: -1;
+      }
+      31%{
+        z-index: 10;
+      }
+      100% {
+        z-index: 10;
+        transform: 
+          rotateY(360deg) 
+          rotateX(-60deg)
+          rotateZ(60deg)
+          translateZ(-140px)
+          translateX(140px)
+          translateY(-140px)
+          /*
+          translateZ(150px)
+          translateY(150px)
+          translateX(150px) 
+          
+          */
+          }
+        }
+
+      .shape {
+        position: relative;
+        width: 200px;
+        height: 200px;
+
+        transform-style: preserve-3d;
+        animation: turn-around 5s linear infinite;
+      }
+
+      .electron{
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 100%;
+
+        transform-style: preserve-3d;
+        animation: orbit 3s linear infinite;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+        
+    </div>
+
+    <script>
+        function summon_ball(base, size, x, y, color) {
+            const screen = document.querySelector(base);
+            const parent = document.createElement("div");
+            parent.classList.add("shape");
+
+            parent.style.top = `${y}px`;
+            parent.style.left = `${x}px`;
+            
+            // Create all faces
+            const faces = [
+              "top", "bottom", "s1", "s2", "s3", "s4", "v1", "v2", "v3", "v4"
+            ];
+
+            parent.style.setProperty("--width", `${size}px`);
+            parent.style.setProperty("--height", `${size}px`);
+
+            faces.forEach(faceClass => {
+                const face = document.createElement("div");
+                face.classList.add("face", faceClass);
+                face.style.backgroundColor = color;
+                parent.appendChild(face);
+            });
+
+          
+            screen.appendChild(parent);
+            return parent;
+        }
+
+        function summon_shell(base){
+            const screen = document.querySelector(base);
+            const object = document.createElement("div");
+            object.classList.add("face", "shell");
+
+            const e = document.createElement("div");
+            
+            e.classList.add("electron")
+
+            object.appendChild(e);
+            screen.appendChild(object);
+            return object;
+        }
+
+        /*
+        summon_shell(".container");
+
+        summon_ball(".electron", 50, 100, 100, "rgb(19, 38, 255)");
+        summon_ball(".electron", 30, -100, -100, "rgb(98, 255, 55)");
+        summon_ball(".electron", 40, -200, -200, "rgb(255, 19, 25)");
+        */
+        summon_ball(".container", 400, 0, 0, "rgb(255, 219, 88)");
+
+        orb = summon_ball(".container", 30, 160, 0, "rgb(167, 78, 99)");
+        orb.style.width = "120px";
+        orb.style.height = "40px";
+        orb.style.animation = "orbit 3s linear infinite";
+
+        orb2 = summon_ball(".container", 35, 150, 20, "rgb(161, 37, 27)");
+        orb2.style.width = "120px";
+        orb2.style.height = "40px";
+        orb2.style.animation = "orbit 3.75s linear .25s infinite";
+
+        orb3 = summon_ball(".container", 40, 160, 40, "rgb(165, 124, 27)");
+        orb3.style.width = "170px";
+        orb3.style.height = "50px";
+        orb3.style.animation = "orbit 4.5s linear .5s infinite";
+
+        orb4 = summon_ball(".container", 50, 160, 54, "rgb(107, 147, 214)");
+        orb4.style.width = "210px";
+        orb4.style.height = "80px";
+        orb4.style.animation = "orbit 5.2s linear .8s infinite";
+
+        orb5 = summon_ball(".container", 100, 90, -100, "rgb(72, 187, 207)");
+        orb5.style.width = "120px";
+        orb5.style.height = "120px";
+        orb5.style.animation = "orbit 7s linear 1s infinite";
+
+        orb6 = summon_ball(".container", 110, 90, -100, "rgb(178, 214, 219)");
+        orb6.style.width = "120px";
+        orb6.style.height = "120px";
+        orb6.style.animation = "orbit 7.3s linear 1.3s infinite";
+
+        orb7 = summon_ball(".container", 150, 110, -100, "rgb(196, 188, 170)");
+        orb7.style.width = "170px";
+        orb7.style.height = "170px";
+        orb7.style.animation = "orbit 8.4s linear 1.5s infinite";
+        orb7.appendChild(summon_shell(".container"));
+
+        orb8 = summon_ball(".container", 170, 130, -100, "rgb(188, 175, 178)");
+        orb8.style.width = "180px";
+        orb8.style.height = "180px";
+        orb8.style.animation = "orbit 9.6s linear 1.75s infinite";
+
+    </script>
+  </body>
+
+</html>
+
