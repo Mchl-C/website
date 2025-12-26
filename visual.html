@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HD Voxel Studio - Final Version</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        
+        /* Layer 1: The Video */
+        #webcam { position: absolute; width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); }
+        
+        /* Layer 2: The Hand Landmarks (Skeleton) */
+        #debug_canvas { position: absolute; top: 0; left: 0; z-index: 6; width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
+        
+        /* Layer 3: The 3D Voxels */
+        #three_canvas { position: absolute; top: 0; left: 0; z-index: 7; pointer-events: none; }
+
+        #ui { position: absolute; top: 20px; left: 20px; z-index: 10; width: 280px; }
+        .card { background: rgba(0,0,0,0.8); color: #00ff88; padding: 15px; border-radius: 12px; border: 1px solid #00ff88; margin-bottom: 10px; font-size: 0.85rem; line-height: 1.4; }
+        button { background: #00ff88; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .active { color: #fff; text-shadow: 0 0 10px #00ff88; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="debug_canvas"></canvas>
+    
+    <div id="ui">
+        <button id="startBtn">INITIALIZE ENGINE</button>
+        <div class="card" id="status">
+            <b>GESTURES:</b><br>
+            <span id="g-move">• Move: Index + Middle</span><br>
+            <span id="g-scale">• Scale: Thumb + Index</span><br>
+            <span id="g-spawn">• Spawn: Thumb + Middle</span><br>
+            <span id="g-clear">• Clear All: Thumb + Pinky</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script type="module">
+        import { HandLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+
+        const video = document.getElementById("webcam");
+        const startBtn = document.getElementById("startBtn");
+        const debugCanvas = document.getElementById("debug_canvas");
+        const debugCtx = debugCanvas.getContext("2d");
+        
+        let handLandmarker, lastVideoTime = -1;
+        const trails = [];
+        const spawnedObjects = [];
+        let lastActionTime = 0;
+
+        // --- THREE.JS ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.domElement.id = "three_canvas";
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const light = new THREE.PointLight(0x00ff88, 2);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+
+        const mainVoxel = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 1, 1),
+            new THREE.MeshStandardMaterial({ color: 0x00ff88, emissive: 0x004422 })
+        );
+        scene.add(mainVoxel);
+        camera.position.z = 5;
+
+        let targetX = 0, targetY = 0, targetScale = 1;
+
+        // --- AI LOGIC ---
+        async function start() {
+            startBtn.style.display = "none";
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: { modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task` },
+                runningMode: "VIDEO", numHands: 1
+            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
+            video.srcObject = stream;
+            
+            video.onloadedmetadata = () => {
+                debugCanvas.width = video.videoWidth;
+                debugCanvas.height = video.videoHeight;
+                requestAnimationFrame(predictLoop);
+            };
+        }
+
+        function createTrail(pos, scale) {
+            const ghost = mainVoxel.clone();
+            ghost.material = mainVoxel.material.clone();
+            ghost.material.transparent = true;
+            ghost.material.opacity = 0.5;
+            ghost.position.copy(pos);
+            ghost.scale.copy(scale);
+            scene.add(ghost);
+            trails.push(ghost);
+        }
+
+        function spawnObject() {
+            const obj = mainVoxel.clone();
+            obj.material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+            obj.position.copy(mainVoxel.position);
+            obj.scale.copy(mainVoxel.scale);
+            scene.add(obj);
+            spawnedObjects.push(obj);
+        }
+
+        function predictLoop() {
+            if (video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
+                const results = handLandmarker.detectForVideo(video, performance.now());
+
+                // Clear the landmark drawing canvas every frame
+                debugCtx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+                const drawingUtils = new DrawingUtils(debugCtx);
+
+                if (results.landmarks && results.landmarks.length > 0) {
+                    const h = results.landmarks[0];
+                    
+                    // --- DRAW LANDMARKS ---
+                    drawingUtils.drawConnectors(h, HandLandmarker.HAND_CONNECTIONS, { color: "#00ff88", lineWidth: 3 });
+                    drawingUtils.drawLandmarks(h, { color: "#ffffff", radius: 4 });
+
+                    const thumb = h[4], index = h[8], middle = h[12], pinky = h[20];
+                    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+                    // MOVE
+                    if (dist(index, middle) < 0.06) {
+                        targetX = -(index.x - 0.5) * 12;
+                        targetY = -(index.y - 0.5) * 8;
+                        createTrail(mainVoxel.position, mainVoxel.scale);
+                        document.getElementById('g-move').className = 'active';
+                    } else { document.getElementById('g-move').className = ''; }
+
+                    // SCALE
+                    targetScale = Math.max(0.1, dist(thumb, index) * 10);
+
+                    // SPAWN (Thumb + Middle)
+                    if (dist(thumb, middle) < 0.05 && Date.now() - lastActionTime > 800) {
+                        spawnObject();
+                        lastActionTime = Date.now();
+                        document.getElementById('g-spawn').className = 'active';
+                    } else { document.getElementById('g-spawn').className = ''; }
+
+                    // CLEAR (Thumb + Pinky)
+                    if (dist(thumb, pinky) < 0.06) {
+                        spawnedObjects.forEach(o => scene.remove(o));
+                        spawnedObjects.length = 0;
+                        document.getElementById('g-clear').className = 'active';
+                    } else { document.getElementById('g-clear').className = ''; }
+                }
+            }
+            requestAnimationFrame(predictLoop);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            mainVoxel.position.x += (targetX - mainVoxel.position.x) * 0.1;
+            mainVoxel.position.y += (targetY - mainVoxel.position.y) * 0.1;
+            const s = mainVoxel.scale.x + (targetScale - mainVoxel.scale.x) * 0.1;
+            mainVoxel.scale.set(s, s, s);
+
+            for (let i = trails.length - 1; i >= 0; i--) {
+                trails[i].material.opacity -= 0.02;
+                if (trails[i].material.opacity <= 0) {
+                    scene.remove(trails[i]);
+                    trails.splice(i, 1);
+                }
+            }
+            renderer.render(scene, camera);
+        }
+
+        startBtn.addEventListener("click", start);
+        animate();
+    </script>
+</body>
+</html>
