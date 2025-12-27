@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>J.A.R.V.I.S. MK-II Interface</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap');
+
+        :root {
+            --primary: #00f2ff;
+            --secondary: #0051ff;
+            --alert: #ff3300;
+            --bg: #050505;
+            --glass: rgba(0, 20, 40, 0.6);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg);
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            cursor: none; /* Hide default mouse */
+        }
+
+        /* LAYERS */
+        #video-feed {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            transform: scaleX(-1);
+            filter: contrast(1.2) brightness(0.6) hue-rotate(180deg) saturate(0.5); /* Sci-fi tint */
+            z-index: 0;
+        }
+
+        #three-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 10;
+            pointer-events: none; /* Let hand tracking see through */
+            box-shadow: inset 0 0 100px rgba(0, 242, 255, 0.2);
+        }
+
+        /* --- UI COMPONENTS --- */
+        
+        /* The Hand Cursor */
+        #cursor {
+            position: absolute;
+            width: 40px; height: 40px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px var(--primary);
+            transition: width 0.1s, background-color 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        #cursor::after {
+            content: '';
+            width: 4px; height: 4px;
+            background: #fff;
+            border-radius: 50%;
+        }
+        #cursor.active {
+            background-color: rgba(0, 242, 255, 0.3);
+            width: 30px; height: 30px;
+            border-color: #fff;
+        }
+
+        /* Arc Reactor Center Overlay */
+        .reticle-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px; height: 300px;
+            border: 1px dashed rgba(0, 242, 255, 0.3);
+            border-radius: 50%;
+            animation: spinSlow 20s linear infinite;
+        }
+        .reticle-inner {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px; height: 250px;
+            border-left: 2px solid var(--primary);
+            border-right: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spinFast 4s linear infinite;
+        }
+
+        /* Side Panels */
+        .panel {
+            position: absolute;
+            background: linear-gradient(90deg, var(--glass) 0%, transparent 100%);
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            width: 300px;
+            backdrop-filter: blur(4px);
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        #panel-left {
+            top: 20%; left: 50px;
+            transform: translateX(-50px);
+        }
+        #panel-right {
+            top: 20%; right: 50px;
+            text-align: right;
+            border-left: none;
+            border-right: 4px solid var(--primary);
+            background: linear-gradient(-90deg, var(--glass) 0%, transparent 100%);
+            transform: translateX(50px);
+        }
+
+        /* Active State for Panels */
+        .panel.online {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Text Elements */
+        h2 { margin: 0 0 10px 0; font-size: 1.2rem; text-shadow: 0 0 5px var(--primary); }
+        p { margin: 5px 0; font-size: 0.8rem; opacity: 0.8; letter-spacing: 1px; }
+        
+        .data-stream {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--secondary);
+            height: 100px;
+            overflow: hidden;
+            border-top: 1px solid rgba(0,242,255,0.3);
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+
+        /* Voice Waveform */
+        #voice-viz {
+            position: absolute;
+            bottom: 50px; left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            align-items: flex-end;
+            height: 50px;
+        }
+        .bar {
+            width: 6px;
+            height: 10px;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* Boot overlay */
+        #boot-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        #start-btn {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 20px 50px;
+            font-family: 'Orbitron';
+            font-size: 1.5rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            transition: 0.3s;
+        }
+        #start-btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 30px var(--primary); }
+
+        /* Animations */
+        @keyframes spinSlow { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes spinFast { 100% { transform: translate(-50%, -50%) rotate(-360deg); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .blinking { animation: blink 2s infinite; }
+        .alert { color: var(--alert); border-color: var(--alert) !important; box-shadow: 0 0 10px var(--alert) !important; }
+
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen">
+        <h1 style="color:var(--primary); text-shadow: 0 0 20px var(--primary);">J.A.R.V.I.S.</h1>
+        <p>SYSTEM INITIALIZATION REQUIRED</p>
+        <button id="start-btn">INITIALIZE</button>
+    </div>
+
+    <video id="video-feed" autoplay playsinline></video>
+    <div id="canvas-container"><canvas id="three-canvas"></canvas></div>
+
+    <div id="ui-layer">
+        
+        <div class="reticle-center"></div>
+        <div class="reticle-inner"></div>
+        
+        <div id="panel-left" class="panel">
+            <h2>SYS. DIAGNOSTICS</h2>
+            <p>CPU CORE: <span id="cpu-stat">NORMAL</span></p>
+            <p>MEMORY: <span id="mem-stat">OPTIMAL</span></p>
+            <p>NETWORK: SECURE</p>
+            <div class="data-stream" id="log-left">
+                > CONNECTING...<br>> WAITING FOR INPUT...
+            </div>
+        </div>
+
+        <div id="panel-right" class="panel">
+            <h2>ENVIRONMENT</h2>
+            <p>TEMP: 24°C</p>
+            <p>HUMIDITY: 45%</p>
+            <p class="blinking">HAND TRACKING: <span id="tracking-stat">OFFLINE</span></p>
+            <div class="data-stream" id="log-right">
+                SCANNING SECTOR 7G...
+            </div>
+        </div>
+
+        <div id="cursor"></div>
+
+        <div id="voice-viz">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <div class="bar"></div><div class="bar"></div>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0"></script>
+
+    <script type="module">
+        import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+
+        // --- 1. SYSTEM AUDIO ENGINE (Web Audio API - No external files) ---
+        class JarvisAudio {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.synth = window.speechSynthesis;
+                this.voice = null;
+            }
+
+            init() {
+                // Pre-load voices
+                let voices = this.synth.getVoices();
+                // Try to find a British or "Google US English" voice for Jarvis feel
+                this.voice = voices.find(v => v.name.includes('Google UK English Male')) || voices[0];
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+            }
+
+            speak(text) {
+                if (this.synth.speaking) this.synth.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.voice = this.voice;
+                utter.pitch = 0.9; // Slightly lower
+                utter.rate = 1.1;  // Slightly faster
+                this.synth.speak(utter);
+            }
+
+            playBeep(type = 'norm') {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                if (type === 'norm') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(440, this.ctx.currentTime + 0.1);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.3);
+                } else if (type === 'hover') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1200, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                }
+
+                osc.start();
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + (type==='error'?0.3:0.1));
+                osc.stop(this.ctx.currentTime + 0.3);
+            }
+        }
+
+        // --- 2. VOICE RECOGNITION (Web Speech API) ---
+        class VoiceCommand {
+            constructor(audioSys, uiSys) {
+                this.audio = audioSys;
+                this.ui = uiSys;
+                
+                if ('webkitSpeechRecognition' in window) {
+                    this.recognition = new webkitSpeechRecognition();
+                    this.recognition.continuous = true;
+                    this.recognition.interimResults = false;
+                    this.recognition.lang = 'en-US';
+                    
+                    this.recognition.onresult = (event) => this.handleResult(event);
+                    this.recognition.onend = () => { if(this.ui.isSystemActive) this.recognition.start(); };
+                    this.recognition.onerror = (e) => console.log("Voice Error", e);
+                } else {
+                    console.warn("Speech Recognition not supported");
+                }
+            }
+
+            start() {
+                try { this.recognition.start(); } catch(e){}
+            }
+
+            handleResult(event) {
+                const last = event.results.length - 1;
+                const command = event.results[last][0].transcript.toLowerCase().trim();
+                this.ui.log(`VOICE INPUT: "${command}"`);
+                
+                if (command.includes('wake up') || command.includes('jarvis')) {
+                    this.audio.playBeep('norm');
+                    this.audio.speak("Yes sir. Systems are online.");
+                    this.ui.activatePanels();
+                }
+                else if (command.includes('status') || command.includes('report')) {
+                    this.audio.playBeep('norm');
+                    this.audio.speak("All systems functioning within normal parameters. Battery at 80 percent.");
+                }
+                else if (command.includes('shutdown') || command.includes('sleep')) {
+                    this.audio.speak("Powering down.");
+                    this.ui.deactivatePanels();
+                }
+                else if (command.includes('scan') || command.includes('analyze')) {
+                    this.audio.speak("Scanning environment.");
+                    this.ui.triggerScanEffect();
+                }
+            }
+        }
+
+        // --- 3. UI & VISUAL MANAGER ---
+        class SystemUI {
+            constructor() {
+                this.isSystemActive = false;
+                this.panelLeft = document.getElementById('panel-left');
+                this.panelRight = document.getElementById('panel-right');
+                this.cursor = document.getElementById('cursor');
+                this.logL = document.getElementById('log-left');
+                this.bars = document.querySelectorAll('.bar');
+            }
+
+            activatePanels() {
+                this.isSystemActive = true;
+                this.panelLeft.classList.add('online');
+                this.panelRight.classList.add('online');
+                this.log("SYSTEMS ONLINE");
+            }
+
+            deactivatePanels() {
+                this.isSystemActive = false;
+                this.panelLeft.classList.remove('online');
+                this.panelRight.classList.remove('online');
+            }
+
+            log(text) {
+                const time = new Date().toLocaleTimeString().split(' ')[0];
+                this.logL.innerHTML = `> [${time}] ${text}<br>` + this.logL.innerHTML;
+            }
+
+            updateCursor(x, y, isPinching) {
+                // Smooth follow could be added here, currently direct mapping
+                this.cursor.style.left = `${x}px`;
+                this.cursor.style.top = `${y}px`;
+
+                if (isPinching) {
+                    this.cursor.classList.add('active');
+                } else {
+                    this.cursor.classList.remove('active');
+                }
+            }
+
+            animateVoiceViz() {
+                // Simulate voice movement randomly
+                this.bars.forEach(bar => {
+                    const h = 5 + Math.random() * 40;
+                    bar.style.height = `${h}px`;
+                });
+                requestAnimationFrame(() => this.animateVoiceViz());
+            }
+            
+            triggerScanEffect() {
+                const scanLine = document.createElement('div');
+                scanLine.style.position = 'absolute';
+                scanLine.style.top = '0';
+                scanLine.style.left = '0';
+                scanLine.style.width = '100%';
+                scanLine.style.height = '5px';
+                scanLine.style.background = '#00f2ff';
+                scanLine.style.boxShadow = '0 0 20px #00f2ff';
+                scanLine.style.zIndex = '99';
+                scanLine.style.transition = 'top 2s ease-in-out';
+                document.body.appendChild(scanLine);
+                
+                setTimeout(() => { scanLine.style.top = '100%'; }, 50);
+                setTimeout(() => { scanLine.remove(); }, 2100);
+            }
+        }
+
+        // --- 4. 3D HOLOGRAM ENGINE (Three.js) ---
+        class HoloDeck {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), alpha: true, antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                
+                this.holoGroup = new THREE.Group();
+                this.createHologram();
+                this.scene.add(this.holoGroup);
+                
+                this.camera.position.z = 5;
+                this.targetScale = 1;
+                this.rotationSpeed = 0.005;
+            }
+
+            createHologram() {
+                // Wireframe Sphere (Planet)
+                const geo = new THREE.IcosahedronGeometry(1.5, 2);
+                const mat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, wireframe: true, transparent: true, opacity: 0.3 });
+                this.globe = new THREE.Mesh(geo, mat);
+                this.holoGroup.add(this.globe);
+
+                // Rings
+                const ringGeo = new THREE.TorusGeometry(2.2, 0.02, 16, 100);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0x0051ff });
+                this.ring1 = new THREE.Mesh(ringGeo, ringMat);
+                this.ring2 = new THREE.Mesh(ringGeo, ringMat);
+                
+                this.ring1.rotation.x = Math.PI / 2;
+                this.ring2.rotation.y = Math.PI / 2;
+                
+                this.holoGroup.add(this.ring1);
+                this.holoGroup.add(this.ring2);
+            }
+
+            interact(isPinching, handX, handY) {
+                // If pinching, scale up and rotate faster
+                if (isPinching) {
+                    this.targetScale = 1.5;
+                    this.rotationSpeed = 0.05;
+                } else {
+                    this.targetScale = 1.0;
+                    this.rotationSpeed = 0.005;
+                }
+
+                // Tilt hologram based on hand position relative to center
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                this.holoGroup.rotation.y += (handX - centerX) * 0.0001;
+                this.holoGroup.rotation.x += (handY - centerY) * 0.0001;
+            }
+
+            animate() {
+                this.globe.rotation.y += this.rotationSpeed;
+                this.ring1.rotation.x += this.rotationSpeed;
+                this.ring1.rotation.y += this.rotationSpeed * 0.5;
+                this.ring2.rotation.x -= this.rotationSpeed;
+                
+                // Smooth scale Lerp
+                this.holoGroup.scale.lerp(new THREE.Vector3(this.targetScale, this.targetScale, this.targetScale), 0.1);
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // --- 5. MAIN CONTROLLER ---
+        const audio = new JarvisAudio();
+        const ui = new SystemUI();
+        const holo = new HoloDeck();
+        const voice = new VoiceCommand(audio, ui);
+        
+        const video = document.getElementById('video-feed');
+        const startBtn = document.getElementById('start-btn');
+        let handLandmarker = undefined;
+
+        // Initialize MediaPipe
+        async function initVision() {
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                    delegate: "GPU"
+                },
+                runningMode: "VIDEO",
+                numHands: 1
+            });
+        }
+
+        // Main Loop
+        function predictLoop() {
+            if (video.readyState >= 2 && handLandmarker) {
+                const results = handLandmarker.detectForVideo(video, performance.now());
+                if (results.landmarks.length > 0) {
+                    const h = results.landmarks[0];
+                    const index = h[8];
+                    const thumb = h[4];
+
+                    // Map coordinates (Mirror X)
+                    const x = (1 - index.x) * window.innerWidth;
+                    const y = index.y * window.innerHeight;
+
+                    // Pinch detection
+                    const dist = Math.hypot(index.x - thumb.x, index.y - thumb.y);
+                    const isPinching = dist < 0.05;
+
+                    document.getElementById('tracking-stat').innerText = "LOCKED";
+                    document.getElementById('tracking-stat').style.color = "#00f2ff";
+
+                    // Update Systems
+                    ui.updateCursor(x, y, isPinching);
+                    holo.interact(isPinching, x, y);
+
+                    // Sound effect on pinch start (debounce needed for prod, simplified here)
+                    if(isPinching && Math.random() > 0.95) audio.playBeep('hover');
+
+                } else {
+                    document.getElementById('tracking-stat').innerText = "SEARCHING...";
+                    document.getElementById('tracking-stat').style.color = "orange";
+                }
+            }
+            holo.animate();
+            requestAnimationFrame(predictLoop);
+        }
+
+        // --- START SEQUENCE ---
+        startBtn.addEventListener('click', async () => {
+            document.getElementById('boot-screen').style.display = 'none';
+            
+            // 1. Audio Init
+            audio.init();
+            audio.playBeep('norm');
+            audio.speak("Initializing J.A.R.V.I.S. Protocol. Systems Check.");
+
+            // 2. Camera Init
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: false });
+            video.srcObject = stream;
+            
+            // 3. AI Init
+            await initVision();
+            
+            // 4. Start Loops
+            voice.start();
+            ui.animateVoiceViz();
+            predictLoop();
+
+            setTimeout(() => {
+                ui.activatePanels();
+                audio.speak("Welcome back, sir.");
+            }, 2000);
+        });
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            holo.camera.aspect = window.innerWidth / window.innerHeight;
+            holo.camera.updateProjectionMatrix();
+            holo.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        /*
+        "Jarvis, wake up" (Starts the system)
+
+        "System report" or "Status"
+
+        "Initialize scanning"
+
+        "Sleep mode"
+        */
+    </script>
+</body>
+</html>
