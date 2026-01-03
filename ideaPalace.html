@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8">
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Idea Palace</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -116,4 +116,5 @@ dwn=()=>{let c=document.getElementById('cnv'),x=c.getContext('2d');x.clearRect(0
 rsz=()=>(c=document.getElementById('cnv'),c.width=c.parentElement.clientWidth,c.height=c.parentElement.clientHeight,dwn()),
 del=id=>{if(confirm("Discard?")){s.ideas=s.ideas.filter(i=>i.id!=id);s.nodes=s.nodes.filter(n=>n.id!=id);upd()}},remW=id=>{s.nodes=s.nodes.filter(n=>n.id!=id);s.conns=s.conns.filter(c=>c.f!=id&&c.t!=id);upd()},clrW=()=>(s.nodes=[],s.conns=[],upd());
 window.onmousedown=e=>{if(e.target.id=='cnv'){isP=true;start={x:e.clientX-pan.x,y:e.clientY-pan.y}}};window.onmousemove=e=>{if(drag){drag.x=(e.clientX-start.x)/zoom;drag.y=(e.clientY-start.y)/zoom;renderWeb()}if(isP){pan.x=e.clientX-start.x;pan.y=e.clientY-start.y;renderWeb()}};window.onmouseup=()=>(drag=null,isP=false,save());window.onwheel=e=>{if(document.getElementById('web').classList.contains('active-view')){e.preventDefault();zoom+=e.deltaY*-0.001;zoom=Math.min(Math.max(0.1,zoom),3);renderWeb()}},{passive:false};applyTheme();upd();
+
 </script></body></html>
