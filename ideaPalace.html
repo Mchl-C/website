@@ -1,4 +1,6 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Idea Palace</title>
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Idea Palace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -6,13 +8,25 @@
 body.dark{--bg:#1a1918;--side:#242220;--accent:#8e7d6a;--accent-dark:#D7C6B4;--text:#d1cdc7;--border:#363330;--card:#2b2927;--sel:rgba(215, 198, 180, 0.1);--dot:rgba(255,255,255,0.05)}
 body{font:13px 'Segoe UI', system-ui, sans-serif;margin:0;display:flex;height:100vh;overflow:hidden;color:var(--text);background:var(--bg);transition:background 0.3s, color 0.3s}
 
-/* FOCUS MODE TRANSITIONS */
-nav{width:280px;background:var(--side);padding:25px 20px;display:flex;flex-direction:column;z-index:100;border-right:1px solid var(--border);box-shadow: 2px 0 10px rgba(0,0,0,0.01);transition: 0.4s ease-in-out} 
-body.focus nav{margin-left:-320px;opacity:0}
+/* RESPONSIVE NAV */
+nav{width:280px;background:var(--side);padding:25px 20px;display:flex;flex-direction:column;z-index:2000;border-right:1px solid var(--border);box-shadow: 2px 0 10px rgba(0,0,0,0.01);transition: 0.4s ease-in-out} 
+@media (max-width: 768px) {
+    nav { position: fixed; left: -320px; height: 100%; }
+    nav.open { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+    .view { padding: 20px 5% !important; }
+    .web-toolbar { width: 90%; flex-wrap: wrap; justify-content: center; gap: 8px !important; padding: 10px !important; }
+}
+
+body.focus nav{margin-left:-320px !important;opacity:0}
 .web-toolbar{transition: 0.3s ease-in-out}
-body.focus .web-toolbar{top:-100px !important;opacity:0}
+body.focus .web-toolbar{top:-120px !important;opacity:0}
+
 .exit-focus{position:absolute;top:20px;left:20px;z-index:5000;background:var(--card);border:1px solid var(--border);padding:8px 15px;border-radius:20px;cursor:pointer;display:none;font-weight:700;color:var(--accent-dark);box-shadow:0 5px 15px rgba(0,0,0,0.1)}
 body.focus .exit-focus{display:block}
+
+/* MOBILE MENU BUTTON */
+.mob-toggle { display: none; position: absolute; top: 20px; left: 20px; z-index: 1500; background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-weight: 700; color: var(--accent-dark); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+@media (max-width: 768px) { .mob-toggle { display: block; } body.focus .mob-toggle { display: none; } }
 
 .nav-header{flex-shrink:0;margin-bottom:15px}
 .nav-btn{width:100%;padding:10px 15px;border:none;background:none;cursor:pointer;text-align:left;font-weight:600;color:#a39b92;transition:0.3s;border-radius:12px;margin-bottom:4px} 
@@ -27,28 +41,21 @@ body.focus .exit-focus{display:block}
 .nav-footer{flex-shrink:0;padding-top:15px;border-top:1px solid var(--border)}
 .util-bar{display:flex;gap:8px;margin-top:10px}
 .btn-util{flex:1;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;background:var(--card);border:1px solid var(--border);color:var(--accent-dark);border-radius:8px;cursor:pointer;transition:0.2s;text-align:center}
-.btn-util:hover{background:var(--side);border-color:var(--accent-dark)}
 main{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column} 
 .view{height:100%;padding:40px 8%;display:none;overflow-y:auto;box-sizing:border-box} .active-view{display:block}
 #web{padding:0;overflow:hidden;background-image:radial-gradient(var(--dot) 1px, transparent 1px);background-size:45px 45px}
-.node{position:absolute;width:180px;padding:20px;background:var(--card);border:1px solid var(--border);border-radius:24px;box-shadow:0 12px 30px rgba(0,0,0,0.2);z-index:10;font-size:13px;cursor:move;transition: opacity 0.4s, filter 0.4s, box-shadow 0.4s}
-.node.ghost-hidden{opacity:0.03; filter:grayscale(1); box-shadow:none; border-color:transparent; pointer-events:none}
+.node{position:absolute;width:160px;padding:15px;background:var(--card);border:1px solid var(--border);border-radius:24px;box-shadow:0 12px 30px rgba(0,0,0,0.2);z-index:10;font-size:12px;cursor:move;transition: opacity 0.4s}
 .idea-card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:25px;margin-bottom:20px;position:relative;transition:0.3s ease;cursor:pointer}
-.idea-card:hover{transform: translateY(-3px); box-shadow:0 12px 30px rgba(0,0,0,0.15)}
-.idea-card.selected{border-color:var(--accent-dark);background:var(--sel)}
-.timestamp{font-size:9px;color:var(--accent-dark);opacity:0.6;position:absolute;bottom:15px;right:25px;font-weight:bold}
 input,textarea,select{width:100%;border:none;border-bottom:1px solid var(--border);margin-bottom:15px;padding:8px 0;outline:none;font:inherit;background:none;color:var(--text)}
 .btn-action{background:var(--accent);color:#fff;border:none;padding:12px;border-radius:12px;cursor:pointer;width:100%;font-weight:700;transition:0.2s}
-#batch-tray{position:absolute;bottom:-100px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);padding:15px 30px;border-radius:50px;display:flex;align-items:center;gap:20px;transition:0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);z-index:3000;box-shadow:0 20px 50px rgba(0,0,0,0.2);border:1px solid var(--border)}
+#batch-tray{position:absolute;bottom:-100px;left:50%;transform:translateX(-50%);background:var(--card);padding:15px 30px;border-radius:50px;display:flex;align-items:center;gap:20px;transition:0.5s;z-index:3000;box-shadow:0 20px 50px rgba(0,0,0,0.2);border:1px solid var(--border)}
 #batch-tray.active{bottom:30px}
-#batch-dest{width:140px;margin:0;border:1px solid var(--border);padding:5px 10px;border-radius:8px;font-size:12px;background:var(--side)}
-.tool-btn{font-size:10px;text-transform:uppercase;color:var(--accent-dark);cursor:pointer;font-weight:700;border:1px solid var(--border);padding:4px 8px;border-radius:6px}
-#drawer{position:absolute;right:-350px;top:0;width:320px;height:100%;background:var(--side);border-left:1px solid var(--border);z-index:2000;transition:0.4s;padding:20px;box-sizing:border-box;display:flex;flex-direction:column}
+#drawer{position:absolute;right:-350px;top:0;width:320px;height:100%;background:var(--side);border-left:1px solid var(--border);z-index:2000;transition:0.4s;padding:20px;box-sizing:border-box}
 #drawer.open{right:0;box-shadow:-10px 0 30px rgba(0,0,0,0.05)}
-#drawer-list{flex:1;overflow-y:auto}
-.drawer-item{background:var(--card);padding:15px;border-radius:15px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer}
 </style></head>
-<body><nav>
+<body>
+<div class="mob-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Menu</div>
+<nav id="sidebar">
 <div class="nav-header"><h2 style="margin:0 0 15px 10px;font-weight:200;color:var(--accent-dark);letter-spacing:1px;font-size:18px">PALACE</h2>
 <button class="nav-btn active" id="b1" onclick="setView('rooms')">Archive Rooms</button><button class="nav-btn" id="b2" onclick="setView('web')">Thought Web</button></div>
 <div id="roomList"></div><div class="nav-footer">
@@ -62,7 +69,7 @@ input,textarea,select{width:100%;border:none;border-bottom:1px solid var(--borde
 </div><input type="file" id="fIn" style="display:none" onchange="importData(event)"></div></nav>
 <main>
 <div class="exit-focus" onclick="toggleFocus()">← Exit Focus</div>
-<div id="rooms" class="view active-view"><input id="gs" placeholder="Seek a memory..." onkeyup="upd()" style="font-size:2.2rem;margin-bottom:35px;font-weight:200;border:none;color:var(--accent-dark)"><h2 id="rt" style="font-weight:300;margin-bottom:20px;font-size:1.4rem"></h2>
+<div id="rooms" class="view active-view"><input id="gs" placeholder="Seek..." onkeyup="upd()" style="font-size:2.2rem;margin-bottom:35px;font-weight:200;border:none;color:var(--accent-dark)"><h2 id="rt" style="font-weight:300;margin-bottom:20px;font-size:1.4rem"></h2>
 <div id="ibx" class="idea-card" style="cursor:default;border-style:dashed;background:rgba(0,0,0,0.01)"><input id="it" placeholder="Title" style="font-size:1.3rem"><textarea id="id" placeholder="Detailed thought process..." style="min-height:80px"></textarea>
 <div style="display:flex;gap:10px;margin-bottom:15px"><span class="tool-btn" onclick="insertMedia('img')">+ Image</span><span class="tool-btn" onclick="insertMedia('link')">+ Link</span></div>
 <button class="btn-action" id="commitBtn" onclick="saveI()">Commit Idea</button></div><div id="disp"></div></div>
@@ -73,15 +80,15 @@ input,textarea,select{width:100%;border:none;border-bottom:1px solid var(--borde
 <button onclick="clrW()" style="border:none;background:var(--side);padding:6px 14px;border-radius:10px;cursor:pointer;font-weight:700;color:#e74c3c">Reset</button>
 </div><canvas id="cnv" onclick="hClick(event)"></canvas><div id="nodes"></div>
 <div id="drawer"><h3 style="margin:0 0 15px 0">Available Thoughts</h3><input id="ds" placeholder="Search archive..." onkeyup="filterDrawer()" style="font-size:12px;margin-bottom:15px"><div id="drawer-list"></div></div></div>
-<div id="batch-tray"><span><b><span id="batch-count">0</span> Selected</b></span><select id="batch-dest"></select><button onclick="batchMove()" style="border:none;background:var(--accent);color:white;padding:8px 20px;border-radius:10px;cursor:pointer;font-weight:700">Move Items</button><button onclick="clearBatch()" style="border:none;background:none;color:#aaa;cursor:pointer">Cancel</button></div></main>
+<div id="batch-tray"><span><b><span id="batch-count">0</span> Selected</b></span><select id="batch-dest"></select><button onclick="batchMove()" style="border:none;background:var(--accent);color:white;padding:8px 20px;border-radius:10px;cursor:pointer;font-weight:700">Move</button></div></main>
 <script>
 const {jsPDF}=window.jspdf;let s=JSON.parse(localStorage.getItem('palV43'))||{rooms:["Grand Hall"],curR:"Grand Hall",ideas:[],nodes:[],conns:[],dark:false},drag=null,pan={x:0,y:0},zoom=1,start={x:0,y:0},isP=false,lId=null,ghost=false,editId=null,batch=[];
 const toggleDark=()=>{s.dark=!s.dark; applyTheme(); save();},applyTheme=()=>{document.body.classList.toggle('dark',s.dark);document.getElementById('darkBtn').innerText=s.dark?"Light":"Dark";if(document.getElementById('web').classList.contains('active-view'))dwn();};
 const save=()=>(localStorage.setItem('palV43',JSON.stringify(s)),dwn()),exportData=()=>{let a=document.createElement('a');a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(s));a.download=`palace.json`;a.click()},
 importData=e=>{let r=new FileReader();r.onload=ev=>{s=JSON.parse(ev.target.result);applyTheme();upd();};r.readAsText(e.target.files[0])},
-setView=v=>{document.querySelectorAll('.view').forEach(e=>e.classList.remove('active-view'));document.getElementById(v).classList.add('active-view');document.getElementById('b1').classList.toggle('active',v==='rooms');document.getElementById('b2').classList.toggle('active',v==='web');if(v==='web')setTimeout(rsz,50);upd()},
+setView=v=>{document.querySelectorAll('.view').forEach(e=>e.classList.remove('active-view'));document.getElementById(v).classList.add('active-view');document.getElementById('b1').classList.toggle('active',v==='rooms');document.getElementById('b2').classList.toggle('active',v==='web');document.getElementById('sidebar').classList.remove('open');if(v==='web')setTimeout(rsz,50);upd()},
 addR=()=>{let n=document.getElementById('rn').value.trim();if(n&&!s.rooms.includes(n)){s.rooms.push(n);s.curR=n;document.getElementById('rn').value='';upd()}},
-switchR=(r)=>{s.curR=r;document.getElementById('gs').value='';upd()},
+switchR=(r)=>{s.curR=r;document.getElementById('gs').value='';upd();document.getElementById('sidebar').classList.remove('open')},
 editR=(r)=>{let n=prompt("Rename:",r);if(n&&n!==r){s.rooms=s.rooms.map(x=>x===r?n:x);s.ideas.forEach(i=>{if(i.r===r)i.r=n});if(s.curR===r)s.curR=n;upd()}},
 remR=(r)=>{if(confirm(`Delete "${r}"?`)){s.rooms=s.rooms.filter(x=>x!==r);s.ideas.filter(i=>i.r===r).forEach(i=>del(i.id));if(s.curR===r)s.curR=s.rooms[0]||"Grand Hall";upd()}},
 insertMedia=(type)=>{let val=prompt("Paste URL:");if(!val)return;let txt=document.getElementById('id');txt.value += type==='img'?`<img src="${val}">`:`<a href="${val}" target="_blank">View Link</a> `;},
@@ -96,12 +103,9 @@ batchMove=()=>{let dest=document.getElementById('batch-dest').value;s.ideas.forE
 toggleDrawer=()=>(document.getElementById('drawer').classList.toggle('open'),filterDrawer()),
 toggleFocus=()=>(document.body.classList.toggle('focus'),setTimeout(rsz,400)),
 filterDrawer=()=>{let q=document.getElementById('ds').value.toLowerCase(),exist=s.nodes.map(n=>n.id);document.getElementById('drawer-list').innerHTML=s.ideas.filter(i=>!exist.includes(i.id)&&(i.t.toLowerCase().includes(q)||i.d.toLowerCase().includes(q))).map(i=>`<div class="drawer-item" onclick="pullNode(${i.id})"><b>${i.t}</b></div>`).join('')},
-pullNode=id=>{s.nodes.push({id,x:(window.innerWidth/2-pan.x-90)/zoom,y:(window.innerHeight/2-pan.y-30)/zoom});toggleDrawer();upd()},
+pullNode=id=>{s.nodes.push({id,x:(window.innerWidth/2-pan.x-80)/zoom,y:(window.innerHeight/2-pan.y-30)/zoom});toggleDrawer();upd()},
 upd=()=>{save();let q=document.getElementById('gs').value.toLowerCase();document.getElementById('gt').innerText="Ghost: "+(ghost?"On":"Off");
-document.getElementById('roomList').innerHTML=s.rooms.map(r=>{return `<div class="room-item"><span class="room-link ${s.curR===r?'active':''}" data-room="${r}">${r}</span><div class="room-actions"><span data-edit="${r}">✎</span><span data-del="${r}">✕</span></div></div>`}).join('');
-document.querySelectorAll('.room-link').forEach(el=>el.onclick=()=>switchR(el.dataset.room));
-document.querySelectorAll('[data-edit]').forEach(el=>el.onclick=()=>editR(el.dataset.edit));
-document.querySelectorAll('[data-del]').forEach(el=>el.onclick=()=>remR(el.dataset.del));
+document.getElementById('roomList').innerHTML=s.rooms.map(r=>{return `<div class="room-item"><span class="room-link ${s.curR===r?'active':''}" onclick="switchR('${r}')">${r}</span><div class="room-actions"><span onclick="editR('${r}')">✎</span><span onclick="remR('${r}')">✕</span></div></div>`}).join('');
 document.getElementById('batch-dest').innerHTML=s.rooms.map(r=>`<option value="${r}">${r}</option>`).join('');
 document.getElementById('batch-tray').classList.toggle('active',batch.length>0);document.getElementById('batch-count').innerText=batch.length;
 if(document.getElementById('rooms').classList.contains('active-view')){
@@ -109,12 +113,17 @@ let flt=q?s.ideas.filter(i=>i.t.toLowerCase().includes(q)||i.d.toLowerCase().inc
 document.getElementById('rt').innerText=q?"Seek Results":s.curR;
 document.getElementById('disp').innerHTML=flt.map(i=>`<div class="idea-card ${batch.includes(i.id)?'selected':''}" onclick="toggleBatch(${i.id})"><div style="position:absolute;top:25px;right:25px;display:flex;gap:12px"><span onclick="event.stopPropagation();prepEdit(${i.id})">✎</span><span onclick="event.stopPropagation();del(${i.id})" style="color:#e74c3c">✕</span></div><h3 style="margin:10px 0;font-weight:400">${i.t}</h3><div style="color:var(--text);opacity:0.8;line-height:1.6">${i.d}</div><div class="timestamp">${i.time||''}</div></div>`).join('')
 }else renderWeb()},
-hClick=e=>{if(e.target.id!=='cnv')return;let r=document.getElementById('cnv').getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;s.conns.forEach((c)=>{let n1=s.nodes.find(n=>n.id===c.f),n2=s.nodes.find(n=>n.id===c.t);if(!n1||!n2)return;let cx=(n1.x+n2.x)/2+90,cy=(n1.y+n2.y)/2+30;if(Math.hypot(mx-(cx*zoom+pan.x),my-(cy*zoom+pan.y))<30){let s1=prompt("Weight (1-5)?",c.s||2),k1=prompt("Hex?",c.c||"#D7C6B4"),l1=prompt("Connection Label?",c.l||"");Object.assign(c,{s:s1,c:k1,l:l1});upd()}})},
-renderWeb=()=>{let c=document.getElementById('nodes');c.innerHTML='';s.nodes.forEach(n=>{let i=s.ideas.find(x=>x.id===n.id);if(!i)return;let g=ghost && i.r !== s.curR;let d=document.createElement('div');d.className='node'+(g?' ghost-hidden':'');d.style.left=(n.x*zoom+pan.x)+'px';d.style.top=(n.y*zoom+pan.y)+'px';d.style.transform=`scale(${zoom})`;d.innerHTML=`<b style="color:var(--accent-dark)">${i.t}</b><div style="margin-top:12px;display:flex;gap:15px"><span onclick="initL(event,${i.id})" style="cursor:pointer">🔗</span><span onclick="remW(${i.id})" style="color:#e74c3c;cursor:pointer">✕</span></div>`;d.onmousedown=e=>{if(e.target.tagName==='SPAN'||g)return;if(lId&&lId!==i.id){s.conns.push({f:lId,t:i.id,s:2,c:"#D7C6B4",l:""});lId=null;upd()}else{drag=n;start={x:e.clientX-n.x*zoom,y:e.clientY-n.y*zoom}}};c.appendChild(d)});dwn()},
+hClick=e=>{if(e.target.id!=='cnv')return;let r=document.getElementById('cnv').getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;s.conns.forEach((c)=>{let n1=s.nodes.find(n=>n.id===c.f),n2=s.nodes.find(n=>n.id===c.t);if(!n1||!n2)return;let cx=(n1.x+n2.x)/2+80,cy=(n1.y+n2.y)/2+30;if(Math.hypot(mx-(cx*zoom+pan.x),my-(cy*zoom+pan.y))<30){let s1=prompt("Weight (1-5)?",c.s||2),k1=prompt("Hex?",c.c||"#D7C6B4"),l1=prompt("Connection Label?",c.l||"");Object.assign(c,{s:s1,c:k1,l:l1});upd()}})},
+renderWeb=()=>{let c=document.getElementById('nodes');c.innerHTML='';s.nodes.forEach(n=>{let i=s.ideas.find(x=>x.id===n.id);if(!i)return;let g=ghost && i.r !== s.curR;let d=document.createElement('div');d.className='node'+(g?' ghost-hidden':'');d.style.left=(n.x*zoom+pan.x)+'px';d.style.top=(n.y*zoom+pan.y)+'px';d.style.transform=`scale(${zoom})`;d.innerHTML=`<b style="color:var(--accent-dark)">${i.t}</b><div style="margin-top:10px;display:flex;gap:15px"><span onclick="initL(event,${i.id})" style="cursor:pointer">🔗</span><span onclick="remW(${i.id})" style="color:#e74c3c;cursor:pointer">✕</span></div>`;d.onmousedown=e=>{if(e.target.tagName==='SPAN'||g)return;if(lId&&lId!==i.id){s.conns.push({f:lId,t:i.id,s:2,c:"#D7C6B4",l:""});lId=null;upd()}else{drag=n;start={x:e.clientX-n.x*zoom,y:e.clientY-n.y*zoom}}};d.ontouchstart=e=>{if(e.target.tagName==='SPAN'||g)return;let t=e.touches[0];drag=n;start={x:t.clientX-n.x*zoom,y:t.clientY-n.y*zoom}};c.appendChild(d)});dwn()},
 initL=(e,id)=>{e.stopPropagation();lId=id;renderWeb()},
-dwn=()=>{let c=document.getElementById('cnv'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);s.conns.forEach(ln=>{let n1=s.nodes.find(z=>z.id===ln.f),n2=s.nodes.find(z=>z.id===ln.t);if(n1&&n2){let i1=s.ideas.find(a=>a.id===n1.id),i2=s.ideas.find(a=>a.id===n2.id);let g=ghost && (i1.r !== s.curR || i2.r !== s.curR);x.globalAlpha=g?0.02:1;x.beginPath();x.moveTo(n1.x*zoom+pan.x+90*zoom,n1.y*zoom+pan.y+30*zoom);x.lineTo(n2.x*zoom+pan.x+90*zoom,n2.y*zoom+pan.y+30*zoom);x.strokeStyle=ln.c||'#D7C6B4';x.lineWidth=(ln.s||2)*zoom;x.stroke();if(ln.l){x.fillStyle=ln.c||'#D7C6B4';x.font=`bold ${10*zoom}px Segoe UI`;x.textAlign="center";x.fillText(ln.l,((n1.x+n2.x)/2+90)*zoom+pan.x,((n1.y+n2.y)/2+25)*zoom+pan.y)}x.globalAlpha=1}})},
+dwn=()=>{let c=document.getElementById('cnv'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);s.conns.forEach(ln=>{let n1=s.nodes.find(z=>z.id===ln.f),n2=s.nodes.find(z=>z.id===ln.t);if(n1&&n2){let i1=s.ideas.find(a=>a.id===n1.id),i2=s.ideas.find(a=>a.id===n2.id);let g=ghost && (i1.r !== s.curR || i2.r !== s.curR);x.globalAlpha=g?0.02:1;x.beginPath();x.moveTo(n1.x*zoom+pan.x+80*zoom,n1.y*zoom+pan.y+30*zoom);x.lineTo(n2.x*zoom+pan.x+80*zoom,n2.y*zoom+pan.y+30*zoom);x.strokeStyle=ln.c||'#D7C6B4';x.lineWidth=(ln.s||2)*zoom;x.stroke();if(ln.l){x.fillStyle=ln.c||'#D7C6B4';x.font=`bold ${10*zoom}px Segoe UI`;x.textAlign="center";x.fillText(ln.l,((n1.x+n2.x)/2+80)*zoom+pan.x,((n1.y+n2.y)/2+25)*zoom+pan.y)}x.globalAlpha=1}})},
 rsz=()=>(c=document.getElementById('cnv'),c.width=c.parentElement.clientWidth,c.height=c.parentElement.clientHeight,dwn()),
 del=id=>{if(confirm("Discard?")){s.ideas=s.ideas.filter(i=>i.id!=id);s.nodes=s.nodes.filter(n=>n.id!=id);upd()}},remW=id=>{s.nodes=s.nodes.filter(n=>n.id!=id);s.conns=s.conns.filter(c=>c.f!=id&&c.t!=id);upd()},clrW=()=>(s.nodes=[],s.conns=[],upd());
-window.onmousedown=e=>{if(e.target.id=='cnv'){isP=true;start={x:e.clientX-pan.x,y:e.clientY-pan.y}}};window.onmousemove=e=>{if(drag){drag.x=(e.clientX-start.x)/zoom;drag.y=(e.clientY-start.y)/zoom;renderWeb()}if(isP){pan.x=e.clientX-start.x;pan.y=e.clientY-start.y;renderWeb()}};window.onmouseup=()=>(drag=null,isP=false,save());window.onwheel=e=>{if(document.getElementById('web').classList.contains('active-view')){e.preventDefault();zoom+=e.deltaY*-0.001;zoom=Math.min(Math.max(0.1,zoom),3);renderWeb()}},{passive:false};applyTheme();upd();
-
+const handleMove=(e)=>{let t=e.touches?e.touches[0]:e;if(drag){drag.x=(t.clientX-start.x)/zoom;drag.y=(t.clientY-start.y)/zoom;renderWeb()}if(isP){pan.x=t.clientX-start.x;pan.y=t.clientY-start.y;renderWeb()}};
+window.onmousedown=e=>{if(e.target.id=='cnv'){isP=true;start={x:e.clientX-pan.x,y:e.clientY-pan.y}}};
+window.ontouchstart=e=>{if(e.target.id=='cnv'){isP=true;let t=e.touches[0];start={x:t.clientX-pan.x,y:t.clientY-pan.y}}};
+window.onmousemove=handleMove;window.ontouchmove=handleMove;
+window.onmouseup=window.ontouchend=()=>(drag=null,isP=false,save());
+window.addEventListener('wheel', e => {if(document.getElementById('web').classList.contains('active-view')){e.preventDefault();zoom+=e.deltaY*-0.001;zoom=Math.min(Math.max(0.1,zoom),3);renderWeb()}}, {passive:false});
+applyTheme();upd();window.onresize=rsz;
 </script></body></html>
