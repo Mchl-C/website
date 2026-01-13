@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Camera</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -11,15 +11,18 @@
     <style>
         .flash { animation: f 0.15s; } @keyframes f { 0%,100% {opacity:0} 50% {opacity:1} }
         .mirror { transform: scaleX(-1); } .modal { background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); }
-        .dragging { opacity: 0.3; scale: 0.9; } video { object-fit: contain; background: #000; }
+        video { object-fit: cover; background: #000; width: 100%; height: 100%; }
+        /* Dynamic height for mobile: 80% of viewport */
+        .cam-container { height: 75vh; width: 100%; max-width: 500px; margin: 0 auto; }
+        @media (min-width: 768px) { .cam-container { height: 600px; max-width: 800px; } }
     </style>
 </head>
-<body class="bg-[#fdfbf7] text-[#5d4037]">
+<body class="bg-[#fdfbf7] text-[#5d4037] overflow-x-hidden">
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useRef, useEffect } = React;
         const App = () => {
-            const [photos, setPhotos] = useState([]); const [cols, setCols] = useState(4);
+            const [photos, setPhotos] = useState([]); const [cols, setCols] = useState(3);
             const [zoom, setZoom] = useState(null); const [cam, setCam] = useState(false);
             const [flash, setFlash] = useState(false); const [tVal, setTVal] = useState(0); 
             const [cd, setCd] = useState(null); const vRef = useRef(null); const cRef = useRef(null);
@@ -46,63 +49,57 @@
             };
 
             const dlSelected = () => {
-                const s = photos.filter(p=>p.sel);
-                if(!s.length) return alert("Select photos first!");
+                const s = photos.filter(p=>p.sel); if(!s.length) return alert("Select photos!");
                 s.forEach((p, i) => setTimeout(() => saveAs(p.b, `img_${p.id}.png`), i * 300));
             };
 
-            const clearAll = () => {
-                if (photos.length > 0 && confirm("Delete all photos in the gallery?")) {
-                    photos.forEach(p => URL.revokeObjectURL(p.url));
-                    setPhotos([]);
-                }
-            };
-
             return (
-                <div className="max-w-6xl mx-auto p-4 flex flex-col items-center gap-6">
-                    <div className="relative w-full bg-black rounded-2xl overflow-hidden aspect-video max-h-[70vh] border-4 border-white shadow-2xl">
-                        <video ref={vRef} autoPlay playsInline className="w-full h-full mirror"></video>
+                <div className="w-full flex flex-col items-center gap-4 p-2 md:p-6">
+                    {/* CAMERA SECTION: Fixed 75-80% height on mobile */}
+                    <div className="cam-container relative bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                        <video ref={vRef} autoPlay playsInline className="mirror"></video>
                         <div className={`absolute inset-0 bg-white opacity-0 pointer-events-none ${flash?'flash':''}`}></div>
-                        {cd!==null && <div className="absolute inset-0 flex items-center justify-center text-white text-9xl font-bold">{cd}</div>}
-                        {!cam ? <button onClick={start} className="absolute inset-0 m-auto h-fit w-fit bg-[#5d4037] text-white px-8 py-4 rounded-full font-bold">Open Camera</button> :
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/40 p-2 rounded-full backdrop-blur">
-                            {[0,3,10].map(v=><button key={v} onClick={()=>setTVal(v)} className={`w-10 h-10 rounded-full text-xs font-bold ${tVal===v?'bg-white text-black':'text-white'}`}>{v||'Off'}</button>)}
-                            <button onClick={()=>cd===null&& (tVal?setCd(tVal):snap())} className="w-16 h-16 bg-white rounded-full border-4 border-[#8d6e63] flex items-center justify-center text-2xl active:scale-90 transition">📸</button>
+                        {cd!==null && <div className="absolute inset-0 flex items-center justify-center text-white text-9xl font-bold drop-shadow-lg">{cd}</div>}
+                        
+                        {!cam ? <button onClick={start} className="absolute inset-0 m-auto h-fit w-fit bg-[#5d4037] text-white px-8 py-4 rounded-full font-bold shadow-xl">Start Studio</button> :
+                        <div className="absolute bottom-6 w-full flex flex-col items-center gap-4 px-4">
+                            <div className="flex bg-black/40 backdrop-blur-lg p-1 rounded-full border border-white/20">
+                                {[0,3,10].map(v=><button key={v} onClick={()=>setTVal(v)} className={`w-12 h-8 rounded-full text-xs font-bold transition ${tVal===v?'bg-white text-black':'text-white'}`}>{v||'Off'}</button>)}
+                            </div>
+                            <button onClick={()=>cd===null&& (tVal?setCd(tVal):snap())} className="w-20 h-20 bg-white rounded-full border-[6px] border-[#8d6e63] flex items-center justify-center text-3xl shadow-2xl active:scale-90 transition">📸</button>
                         </div>}
                     </div>
 
-                    <div className="w-full space-y-4">
-                        <div className="flex flex-wrap justify-between items-center bg-white p-4 rounded-xl border shadow-sm gap-4">
-                            <div className="flex items-center gap-3">
-                                <span className="text-xs font-bold text-[#a1887f] uppercase">Grid</span>
-                                <input type="range" min="2" max="8" value={cols} onChange={e=>setCols(parseInt(e.target.value))} className="accent-[#8d6e63] w-24 md:w-32"/>
-                            </div>
-                            <div className="flex items-center gap-3 md:gap-6">
-                                <button onClick={()=>setPhotos(ps=>ps.map(x=>({...x, sel:true})))} className="text-[10px] font-bold uppercase text-[#8d6e63]">Select All</button>
-                                <button onClick={clearAll} className="text-[10px] font-bold uppercase text-red-500 hover:underline">Clear All</button>
-                                <button onClick={dlSelected} className="bg-[#5d4037] text-white px-5 py-2 rounded-full text-xs font-bold shadow-md hover:opacity-90">Download Selected</button>
+                    {/* GALLERY TOOLS */}
+                    <div className="w-full max-w-[500px] md:max-w-4xl space-y-4">
+                        <div className="flex justify-between items-center bg-white p-3 rounded-2xl border shadow-sm">
+                            <input type="range" min="2" max="5" value={cols} onChange={e=>setCols(parseInt(e.target.value))} className="accent-[#8d6e63] w-20"/>
+                            <div className="flex gap-3">
+                                <button onClick={()=>setPhotos([])} className="text-[10px] font-bold uppercase text-red-400">Clear</button>
+                                <button onClick={dlSelected} className="bg-[#5d4037] text-white px-4 py-2 rounded-full text-[10px] font-bold shadow-md">Download</button>
                             </div>
                         </div>
-                        <div className="grid gap-3" style={{gridTemplateColumns:`repeat(${cols}, 1fr)`}}>
+
+                        {/* GALLERY GRID */}
+                        <div className="grid gap-2 mb-10" style={{gridTemplateColumns:`repeat(${cols}, 1fr)`}}>
                             {photos.map((p, i) => (
-                                <div key={p.id} draggable onDragStart={e=>{e.dataTransfer.setData("idx",i); e.target.classList.add('dragging')}} onDragEnd={e=>e.target.classList.remove('dragging')} onDragOver={e=>e.preventDefault()} onDrop={e=>move(e.dataTransfer.getData("idx"), i)}
-                                    className="relative aspect-square group rounded-xl overflow-hidden border-2 border-transparent hover:border-[#8d6e63] bg-white shadow-sm transition-all">
-                                    <img src={p.url} className="w-full h-full object-cover cursor-pointer" onClick={()=>setZoom(p)}/>
-                                    <input type="checkbox" checked={p.sel} onChange={()=>setPhotos(ps=>ps.map(x=>x.id===p.id?{...x,sel:!x.sel}:x))} className="absolute top-2 left-2 w-5 h-5 accent-[#8d6e63] cursor-pointer"/>
-                                    <button onClick={()=>setPhotos(ps=>ps.filter(x=>x.id!==p.id))} className="absolute top-2 right-2 bg-white/80 text-red-500 w-7 h-7 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow-sm">✕</button>
+                                <div key={p.id} draggable onDragStart={e=>e.dataTransfer.setData("idx",i)} onDragOver={e=>e.preventDefault()} onDrop={e=>move(e.dataTransfer.getData("idx"), i)}
+                                    className="relative aspect-[3/4] group rounded-xl overflow-hidden border-2 border-transparent bg-white shadow-sm">
+                                    <img src={p.url} className="w-full h-full object-cover" onClick={()=>setZoom(p)}/>
+                                    <input type="checkbox" checked={p.sel} onChange={()=>setPhotos(ps=>ps.map(x=>x.id===p.id?{...x,sel:!x.sel}:x))} className="absolute top-1.5 left-1.5 w-5 h-5 accent-[#8d6e63]"/>
+                                    <button onClick={()=>setPhotos(ps=>ps.filter(x=>x.id!==p.id))} className="absolute top-1 right-1 bg-white/90 text-red-500 w-6 h-6 rounded-full flex items-center justify-center text-[10px] shadow-sm">✕</button>
                                 </div>
                             ))}
                         </div>
                     </div>
 
+                    {/* ZOOM MODAL */}
                     {zoom && (
-                        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center modal p-6" onClick={()=>setZoom(null)}>
-                            <div className="relative max-w-full max-h-[80vh]" onClick={e=>e.stopPropagation()}>
-                                <img src={zoom.url} className="max-w-full max-h-full rounded-lg shadow-2xl border-4 border-white" />
-                                <div className="mt-4 flex justify-center gap-4">
-                                    <button onClick={()=>saveAs(zoom.b, `img_${zoom.id}.png`)} className="bg-white text-black px-6 py-2 rounded-full font-bold text-sm">Save This Image</button>
-                                    <button onClick={()=>setZoom(null)} className="bg-red-500 text-white px-6 py-2 rounded-full font-bold text-sm">Close</button>
-                                </div>
+                        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center modal p-4" onClick={()=>setZoom(null)}>
+                            <img src={zoom.url} className="max-w-full max-h-[85vh] rounded-lg border-2 border-white" />
+                            <div className="mt-4 flex gap-4">
+                                <button onClick={()=>saveAs(zoom.b, `img.png`)} className="bg-white px-6 py-2 rounded-full font-bold text-sm">Save</button>
+                                <button onClick={()=>setZoom(null)} className="bg-red-500 text-white px-6 py-2 rounded-full font-bold text-sm">Back</button>
                             </div>
                         </div>
                     )}
